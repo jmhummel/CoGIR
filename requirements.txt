@@ -1,3 +1,7 @@
+albumentations
+matplotlib
+notebook
 numpy
 pillow
+pytest
 torch
