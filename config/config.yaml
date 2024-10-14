@@ -1,0 +1,10 @@
+defaults:
+  - model: unet
+  - data: dataset
+  - train: train
+
+project_name: CoGIR
+experiment_desc: "Unet, no augmentation"
+
+seed: 42
+

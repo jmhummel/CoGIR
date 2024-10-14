@@ -1,7 +1,10 @@
 albumentations
+lightning
 matplotlib
 notebook
 numpy
 pillow
 pytest
 torch
+torchvision
+wandb
