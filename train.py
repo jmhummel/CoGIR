@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+import albumentations as A
 import torch
 from torch.utils.data import DataLoader
 import wandb
@@ -12,8 +13,9 @@ from utils.dataset import ImageDataset
 def train(image_dir: str):
     wandb.init(project="CoGIR")
 
-    dataset = ImageDataset(location=Path(image_dir), size=(512, 512))
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+    dataset = ImageDataset(location=Path(image_dir), size=(512, 512),
+                           degradations=[A.RandomBrightnessContrast(p=1.0)])
+    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
     model = UNet(in_channels=3, out_channels=3)
     model = model.cuda()
@@ -46,6 +48,7 @@ def train(image_dir: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("image_dir", type=str)
+    parser.add_argument("--batch-size", type=int, default=16)
     image_dir = parser.parse_args().image_dir
     train(image_dir)
 
