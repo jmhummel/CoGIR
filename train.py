@@ -14,8 +14,8 @@ def train(image_dir: str):
     wandb.init(project="CoGIR")
 
     dataset = ImageDataset(location=Path(image_dir), size=(512, 512),
-                           degradations=[A.RandomBrightnessContrast(p=1.0)])
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+                           degradations=[A.RandomBrightnessContrast(p=1.0, brightness_limit=0.5, contrast_limit=0.5),])
+    dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
 
     model = UNet(in_channels=3, out_channels=3)
     model = model.cuda()
@@ -39,9 +39,9 @@ def train(image_dir: str):
             optimizer.step()
 
             print(f"Epoch [{epoch+1}/{10}], Loss: {loss.item():.4f}")
+            wandb.log({"loss": loss.item()})
 
             if i % 10 == 0:
-                wandb.log({"loss": loss.item()})
                 input_output_target = torch.cat([inputs, outputs, targets], dim=3)
                 wandb.log({"input_output_target": [wandb.Image(x) for x in input_output_target]})
 
