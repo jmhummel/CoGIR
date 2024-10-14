@@ -48,7 +48,6 @@ def train(image_dir: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("image_dir", type=str)
-    parser.add_argument("--batch-size", type=int, default=16)
     image_dir = parser.parse_args().image_dir
     train(image_dir)
 
