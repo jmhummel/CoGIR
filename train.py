@@ -102,6 +102,7 @@ def train(cfg: DictConfig):
     trainer = pl.Trainer(
         logger=logger,
         callbacks=callbacks,
+        min_epochs=cfg.train.epochs,
         max_epochs=cfg.train.epochs,
         precision=cfg.train.precision,
         devices=cfg.train.gpus if torch.cuda.is_available() else 0,
