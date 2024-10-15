@@ -3,8 +3,9 @@ import numpy as np
 
 from pathlib import Path
 import albumentations as A
+import torch
 
-from utils.dataset import ImageDataset
+from data.dataset import ImageDataset
 
 
 # Test ImageDataset conversion
@@ -16,8 +17,8 @@ def test_image_conversion():
     input_tensor, target_tensor = dataset[0]
 
     # Check the dtype
-    # assert input_tensor.dtype == np.float32, "Input tensor should be float32"
-    # assert target_tensor.dtype == np.float32, "Target tensor should be float32"
+    assert input_tensor.dtype == torch.float32, "Input tensor should be float32"
+    assert target_tensor.dtype == torch.float32, "Target tensor should be float32"
 
     # Check the shape (3 channels, height, width)
     assert input_tensor.shape == (3, 256, 256), "Input tensor shape should be (3, 256, 256)"

@@ -1,0 +1,15 @@
+defaults:
+  - config
+  - _self_
+
+data:
+  dataset:
+    location: /media/disk3/unsplash-lite_data
+  batch_size: 4
+train:
+  gpus: [0, 1]
+logger:
+  notes: "Hydra/Lightning refactor"
+criterion:
+  _target_: criterion.lpips_loss.LPIPSLoss
+  use_l1: true
