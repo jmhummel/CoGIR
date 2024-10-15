@@ -6,15 +6,26 @@ from pprint import pformat
 import albumentations as A
 import hydra
 import torch
+import torchvision
+from torchmetrics.functional import precision
+
+import wandb
 from hydra.utils import instantiate
 from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
-import wandb
 
-from model.unet import UNet
-from data.dataset import ImageDataset
+BANNER = """
+ ██████╗ ██████╗  ██████╗ ██╗██████╗ 
+██╔════╝██╔═══██╗██╔════╝ ██║██╔══██╗
+██║     ██║   ██║██║  ███╗██║██████╔╝
+██║     ██║   ██║██║   ██║██║██╔══██╗
+╚██████╗╚██████╔╝╚██████╔╝██║██║  ██║
+ ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═╝
+"""
+
+print(BANNER)
+
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +41,7 @@ class LightningModule(pl.LightningModule):
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
+        self.save_hyperparameters()
 
     def forward(self, x):
         return self.model(x)
@@ -38,7 +50,30 @@ class LightningModule(pl.LightningModule):
         inputs, targets = batch
         outputs = self.model(inputs)
         loss = self.criterion(outputs, targets)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('train/loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+
+        if batch_idx % 10 == 0:
+            # TODO: show image grid
+            # pass
+            input_output_target = torch.cat([inputs, outputs, targets], dim=3)
+            # grid = torchvision.utils.make_grid(input_output_target, nrow=12)
+            # self.log("train/input_output_target", grid)
+            # self.logger.log({"train/input_output_target": [wandb.Image(x) for x in input_output_target]})
+            self.logger.log_image(key="train/input_output_target", images=[wandb.Image(x) for x in input_output_target])
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        inputs, targets = batch
+        outputs = self.model(inputs)
+        loss = self.criterion(outputs, targets)
+        self.log('val/loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+
+        # TODO: show image grid
+        input_output_target = torch.cat([inputs, outputs, targets], dim=3)
+        # grid = torchvision.utils.make_grid(input_output_target, nrow=4)
+        # self.log("val/input_output_target", grid)
+        # self.logger.log({"val/input_output_target": [wandb.Image(x) for x in input_output_target]})
+        self.logger.log_image(key="val/input_output_target", images=[wandb.Image(x) for x in input_output_target])
         return loss
 
     def configure_optimizers(self):
@@ -47,6 +82,10 @@ class LightningModule(pl.LightningModule):
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def train(cfg: DictConfig):
     log_config(cfg)
+
+    float32_matmul_precision = cfg.train.get("float32_matmul_precision")
+    if float32_matmul_precision:
+        torch.set_float32_matmul_precision(float32_matmul_precision)
 
     # Instantiate all the objects using Hydra
     logger = instantiate(cfg.logger)
@@ -64,52 +103,18 @@ def train(cfg: DictConfig):
         logger=logger,
         callbacks=callbacks,
         max_epochs=cfg.train.epochs,
+        precision=cfg.train.precision,
         devices=cfg.train.gpus if torch.cuda.is_available() else 0,
+        strategy="ddp",
     )
 
     # Train the model
     trainer.fit(lightning_module, data_module)
 
-    # Finish the W&B run
-    wandb.finish()
+    # # Finish the W&B run
+    # wandb.finish()
 
 if __name__ == "__main__":
     train()
 
-"""
-def _train(image_dir: str):
-    wandb.init(project="CoGIR")
-
-    dataset = ImageDataset(location=Path(image_dir), size=(512, 512),
-                           degradations=[A.RandomBrightnessContrast(p=1.0, brightness_limit=0.5, contrast_limit=0.5),])
-    dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
-
-    model = UNet(in_channels=3, out_channels=3)
-    model = model.cuda()
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    criterion = torch.nn.MSELoss()
-
-    model.train()
-    for epoch in range(10):
-        for i, (inputs, targets) in enumerate(dataloader):
-            inputs = inputs.cuda()
-            targets = targets.cuda()
-
-            outputs = model(inputs)
-
-            loss = criterion(outputs, targets)
-
-            optimizer.zero_grad()
-
-            loss.backward()
-            optimizer.step()
-
-            print(f"Epoch [{epoch+1}/{10}], Loss: {loss.item():.4f}")
-            wandb.log({"loss": loss.item()})
-
-            if i % 10 == 0:
-                input_output_target = torch.cat([inputs, outputs, targets], dim=3)
-                wandb.log({"input_output_target": [wandb.Image(x) for x in input_output_target]})
-"""
 

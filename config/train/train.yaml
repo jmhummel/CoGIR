@@ -1,2 +1,4 @@
 epochs: 10
 gpus: 1
+precision: bf16
+float32_matmul_precision: "medium"

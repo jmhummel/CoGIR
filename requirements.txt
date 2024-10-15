@@ -1,6 +1,7 @@
 albumentations
 hydra-core
 lightning
+lpips
 matplotlib
 notebook
 numpy
