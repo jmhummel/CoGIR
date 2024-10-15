@@ -1,5 +1,6 @@
 defaults:
   - config
+  - _self_
 
 data:
   dataset:
@@ -9,3 +10,6 @@ train:
   gpus: [0, 1]
 logger:
   notes: "Hydra/Lightning refactor"
+criterion:
+  _target_: criterion.lpips_loss.LPIPSLoss
+  use_l1: true

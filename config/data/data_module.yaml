@@ -3,12 +3,13 @@ dataset:
   _target_: data.dataset.ImageDataset
   location: /home/ubuntu/data/unsplash-lite_data
   size: 512
-  augmentations:
+  augmentations: []
+  degradations:
     - _target_: albumentations.RandomBrightnessContrast
       p: 1.0
       brightness_limit: 0.5
       contrast_limit: 0.5
-  degradations: []
 batch_size: 8
 num_workers: 4
 val_size: 32
+pin_memory: true

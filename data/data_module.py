@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 import torch
+from jupyter_core.version import parts
 from torch.utils.data import Dataset, random_split, DataLoader
 
 from data.dataset import ImageDataset
@@ -10,7 +11,9 @@ class ImageDataModule(pl.LightningDataModule):
                  dataset: ImageDataset,
                  batch_size: int = 32,
                  num_workers: int = 4,
-                 val_size: int = 32
+                 val_size: int = 32,
+                 pin_memory: bool = True,
+                 persistent_workers: bool = False
                  ):
         super().__init__()
         self.full_dataset = dataset
@@ -19,6 +22,8 @@ class ImageDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.val_size = val_size
+        self.pin_memory = pin_memory
+        self.persistent_workers = persistent_workers
 
     def setup(self, stage=None):
         print(f"Full dataset size: {len(self.full_dataset)}")
@@ -31,8 +36,10 @@ class ImageDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
+            self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers, shuffle=True)
 
     def val_dataloader(self):
         return DataLoader(
-            self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False)
+            self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers, shuffle=False)
