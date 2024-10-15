@@ -1,10 +1,8 @@
 defaults:
   - model: unet
-  - data: dataset
+  - data: data_module
   - train: train
-
-project_name: CoGIR
-experiment_desc: "Unet, no augmentation"
-
-seed: 42
-
+  - optimizer: adam
+  - criterion: mse
+  - logger: wandb
+  - callbacks: [checkpoint]

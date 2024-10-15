@@ -1,4 +1,3 @@
-from glob import glob
 from pathlib import Path
 from typing import Union, Tuple, List
 
@@ -6,12 +5,11 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import cv2
 import numpy as np
-from PIL import Image
 from torch.utils.data import Dataset
-
 
 def get_image_paths(image_dir: Path) -> List[Path]:
     return list(image_dir.rglob('*.jpg')) + list(image_dir.rglob('*.png'))
+
 
 class ImageDataset(Dataset):
     def __init__(self,
@@ -32,7 +30,6 @@ class ImageDataset(Dataset):
         self.degradations = A.Compose(degradations)
         self.to_tensor = ToTensorV2()
 
-
     def __len__(self):
         return len(self.paths)
 
@@ -41,7 +38,6 @@ class ImageDataset(Dataset):
         image = cv2.imread(str(path))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.astype(np.float32) / 255.0
-
 
         augmented_image = self.augmentations(image=image)['image']
         degraded_image = self.degradations(image=augmented_image)['image']

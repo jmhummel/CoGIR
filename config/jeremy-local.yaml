@@ -1,0 +1,11 @@
+defaults:
+  - config
+
+data:
+  dataset:
+    location: /media/disk3/unsplash-lite_data
+  batch_size: 4
+train:
+  gpus: [0, 1]
+logger:
+  notes: "Hydra/Lightning refactor"

@@ -1,0 +1,5 @@
+_target_: pytorch_lightning.loggers.WandbLogger
+project: CoGIR
+entity: cs682-CoGIR
+notes: "Unet"
+log_model: true
