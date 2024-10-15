@@ -1,10 +1,2 @@
-train:
-  epochs: 10
-  learning_rate: 0.001
-  optimizer: "adam"
-  loss: "mse"
-  wandb:
-    project: ${project_name}
-    entity: cs682-CoGIR
-    notes: ${experiment_desc}
-    log_model: true
+epochs: 10
+gpus: 1
