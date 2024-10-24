@@ -1,5 +1,7 @@
 _target_: data.data_module.ImageDataModule
-dataset:
+location: /home/ubuntu/data/unsplash-lite_data
+train_dataset:
+  _partial_: true
   _target_: data.dataset.ImageDataset
   location: /home/ubuntu/data/unsplash-lite_data
   size: 512
@@ -9,6 +11,15 @@ dataset:
       p: 1.0
       brightness_limit: 0.5
       contrast_limit: 0.5
+val_dataset:
+  _partial_: true
+  _target_: data.dataset.ValidationDataset
+  size: 512
+#  item_specific_degradations:
+#    - _target_: albumentations.RandomBrightnessContrast
+#      p: 1.0
+#      brightness_limit: 0.5
+#      contrast_limit: 0.5
 batch_size: 8
 num_workers: 4
 val_size: 32

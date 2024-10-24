@@ -1,22 +1,29 @@
-import pytorch_lightning as pl
-import torch
-from jupyter_core.version import parts
-from torch.utils.data import Dataset, random_split, DataLoader
+from pathlib import Path
+from typing import Union
 
-from data.dataset import ImageDataset
+import pytorch_lightning as pl
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader
+
+from data.utils import get_image_paths, PartialDataset
 
 
 class ImageDataModule(pl.LightningDataModule):
     def __init__(self,
-                 dataset: ImageDataset,
+                 location: Union[str, Path],
+                 train_dataset: PartialDataset,
+                 val_dataset: PartialDataset,
+                 val_size: int = 32,
                  batch_size: int = 32,
                  num_workers: int = 4,
-                 val_size: int = 32,
                  pin_memory: bool = True,
                  persistent_workers: bool = False
                  ):
         super().__init__()
-        self.full_dataset = dataset
+        self.location = location
+        self.paths = get_image_paths(location)
+        self.train_dataset_partial = train_dataset
+        self.val_dataset_partial = val_dataset
         self.train_dataset = None
         self.val_dataset = None
         self.batch_size = batch_size
@@ -26,13 +33,13 @@ class ImageDataModule(pl.LightningDataModule):
         self.persistent_workers = persistent_workers
 
     def setup(self, stage=None):
-        print(f"Full dataset size: {len(self.full_dataset)}")
-        train_size = len(self.full_dataset) - self.val_size
+        print(f"Full dataset size: {len(self.paths)}")
+        train_size = len(self.paths) - self.val_size
         print(f"Train dataset size: {train_size}")
         print(f"Val dataset size: {self.val_size}")
-        self.train_dataset, self.val_dataset = random_split(
-            self.full_dataset, [train_size, self.val_size],
-            generator=torch.Generator().manual_seed(42))
+        train_paths, val_paths = train_test_split(self.paths, test_size=self.val_size, random_state=42)
+        self.train_dataset = self.train_dataset_partial(train_paths)
+        self.val_dataset = self.val_dataset_partial(val_paths)
 
     def train_dataloader(self):
         return DataLoader(
