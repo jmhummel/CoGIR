@@ -3,17 +3,22 @@ defaults:
   - _self_
 
 data:
-  dataset:
-    location: /media/disk3/unsplash-lite_data
+  location: /media/disk3/unsplash-lite_data
+  train_dataset:
     augmentations: []
     degradations:
       - _target_: albumentations.RandomBrightnessContrast
         p: 1.0
         brightness_limit: 0.5
         contrast_limit: 0.5
-  batch_size: 4
+  batch_size: 8
 train:
+  epochs: null
   gpus: [0, 1]
+  num_sanity_val_steps: 0
+  val_check_interval: 1000
+  check_val_every_n_epoch: null
+  log_every_n_steps: 1
 logger:
   notes: "Hydra/Lightning refactor"
 criterion:

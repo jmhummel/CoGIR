@@ -24,10 +24,12 @@ BANNER = """
  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═╝
 """
 
-print(BANNER)
-
 
 log = logging.getLogger(__name__)
+
+@rank_zero_only
+def print_banner():
+    log.info(BANNER)
 
 @rank_zero_only
 def log_config(cfg: DictConfig):
@@ -42,6 +44,8 @@ class LightningModule(pl.LightningModule):
         self.optimizer = optimizer
         self.criterion = criterion
         self.save_hyperparameters()
+
+        self.val_images = []
 
     def forward(self, x):
         return self.model(x)
@@ -62,25 +66,32 @@ class LightningModule(pl.LightningModule):
             self.logger.log_image(key="train/input_output_target", images=[wandb.Image(x) for x in input_output_target])
         return loss
 
+    def on_validation_epoch_start(self) -> None:
+        self.val_images = []
+
     def validation_step(self, batch, batch_idx):
         inputs, targets = batch
         outputs = self.model(inputs)
         loss = self.criterion(outputs, targets)
-        self.log('val/loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log('val/loss', loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
 
         # TODO: show image grid
         input_output_target = torch.cat([inputs, outputs, targets], dim=3)
         # grid = torchvision.utils.make_grid(input_output_target, nrow=4)
         # self.log("val/input_output_target", grid)
         # self.logger.log({"val/input_output_target": [wandb.Image(x) for x in input_output_target]})
-        self.logger.log_image(key="val/input_output_target", images=[wandb.Image(x) for x in input_output_target])
+        self.val_images.extend([wandb.Image(x.detach().cpu()) for x in input_output_target])
         return loss
+
+    def on_validation_epoch_end(self) -> None:
+        self.logger.log_image(key="val/input_output_target", images=self.val_images)
 
     def configure_optimizers(self):
         return self.optimizer
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def train(cfg: DictConfig):
+    print_banner()
     log_config(cfg)
 
     float32_matmul_precision = cfg.train.get("float32_matmul_precision")
@@ -107,7 +118,14 @@ def train(cfg: DictConfig):
         precision=cfg.train.precision,
         devices=cfg.train.gpus if torch.cuda.is_available() else 0,
         strategy="ddp",
+        num_sanity_val_steps=cfg.train.num_sanity_val_steps,
+        val_check_interval=cfg.train.val_check_interval,
+        check_val_every_n_epoch=cfg.train.check_val_every_n_epoch,
+        log_every_n_steps=cfg.train.log_every_n_steps,
     )
+
+    # Run the model through the validation set
+    trainer.validate(lightning_module, data_module)
 
     # Train the model
     trainer.fit(lightning_module, data_module)

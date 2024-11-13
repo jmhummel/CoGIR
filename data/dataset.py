@@ -57,7 +57,7 @@ class ImageDataset(BaseDataset):
 class ValidationDataset(BaseDataset):
     def __init__(self, paths: List[Path],
                  size: Union[int, Tuple[int, int]] = (512, 512),
-                 # item_specific_degradations: List[List[A.BasicTransform | A.BaseCompose]] = (),
+                 degradations_mapping: List[List[A.BasicTransform | A.BaseCompose]] = (),
                  **kwargs):
         super().__init__(paths, **kwargs)
         if isinstance(size, int):
@@ -65,15 +65,15 @@ class ValidationDataset(BaseDataset):
         self.size = size
 
         self.resize = A.Resize(*size, interpolation=cv2.INTER_CUBIC)
-        # self.item_specific_degradations = [A.Compose(degradations) for degradations in item_specific_degradations]
+        self.degradations_mapping = [A.Compose(degradations) for degradations in degradations_mapping]
         self.to_tensor = ToTensorV2()
 
     def __getitem__(self, idx):
         image = super().__getitem__(idx)
-        # degradation = self.item_specific_degradations[idx % len(self.item_specific_degradations)]
-        # degraded_image = degradation(image=image)['image']
-        # input_image = self.resize(image=degraded_image)['image']
-        input_image = self.resize(image=image)['image']
+        degradation = self.degradations_mapping[idx % len(self.degradations_mapping)]
+        degraded_image = degradation(image=image)['image']
+        input_image = self.resize(image=degraded_image)['image']
+        # input_image = self.resize(image=image)['image']
         target_image = self.resize(image=image)['image']
 
         # Clip the values to be between 0 and 1
