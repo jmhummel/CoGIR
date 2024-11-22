@@ -7,11 +7,12 @@ import albumentations as A
 import hydra
 import torch
 import torchvision
+from pytorch_lightning.utilities import rank_zero_only
 from torchmetrics.functional import precision
 
 import wandb
 from hydra.utils import instantiate
-from lightning_utilities.core.rank_zero import rank_zero_only
+
 from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
 
