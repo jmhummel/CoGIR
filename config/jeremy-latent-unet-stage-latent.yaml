@@ -5,7 +5,7 @@ defaults:
 
 data:
   dataset:
-    location: /media/disk3/unsplash-lite_data
+    location: /home/shared/data/unsplash-lite_data
     augmentations:
       - _target_: albumentations.Affine
         rotate: [-1, 1]
@@ -51,14 +51,16 @@ data:
       - _target_: albumentations.RandomGamma
         gamma_limit: [ 75, 125 ]
         p: 0.5
-  batch_size: 4
+  batch_size: 8
 train:
-  gpus: [0, 1]
-  controlnet_weights: checkpoints/control_sd15_ini.ckpt
+  gpus: [4, 5]
+  controlnet_weights: /home/shared/models/control_sd15_ini.ckpt
+  epochs: 2000
   stage: latent  # [latent, pixel]
-logger:
-  notes: "SD U-Net (latent space, frozen autoencoder)"
+  logger:
+    notes: "SD U-Net (latent space, frozen autoencoder)"
 criterion:
   _target_: torch.nn.MSELoss
-#  _target_: criterion.lpips_loss.LPIPSLoss
-#  use_l1: true
+callbacks:
+  checkpoint:
+    monitor: train/loss

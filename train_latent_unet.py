@@ -2,12 +2,14 @@ import argparse
 import logging
 from pathlib import Path
 from pprint import pformat
+from typing import Literal
 
 import albumentations as A
 import hydra
 import torch
 import torchvision
 from pytorch_lightning.utilities import rank_zero_only
+from torch.utils.checkpoint import checkpoint
 from torchmetrics.functional import precision
 
 import wandb
@@ -40,11 +42,12 @@ def log_config(cfg: DictConfig):
     log.info('-' * 30)
 
 class LightningModule(pl.LightningModule):
-    def __init__(self, model, optimizer, criterion):
+    def __init__(self, model, optimizer, criterion, stage: Literal["latent", "pixel"] = "pixel"):
         super().__init__()
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
+        self.stage = stage
         self.save_hyperparameters()
 
     def forward(self, x):
@@ -52,13 +55,34 @@ class LightningModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         inputs, targets = batch
-        outputs = self.model(inputs)
-        loss = self.criterion(outputs, targets)
+
+        if self.stage == "latent":
+            # Minimize the latent space loss
+            with torch.no_grad():
+                combined = torch.cat([inputs, targets], dim=0)
+                posterior = self.model.autoencoder.encode(combined)
+                z = posterior.sample()
+                z_inputs, z_targets = z.chunk(2, dim=0)
+            z_outputs = self.model.unet(z_inputs)
+            loss = self.criterion(z_outputs, z_targets)
+            outputs = None
+        elif self.stage == "pixel":
+            # Minimize the reconstruction loss
+            outputs = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+            z_outputs = None
+        else:
+            raise ValueError(f"Invalid stage: {self.stage}")
+        # outputs = self.model(inputs)
+        # loss = self.criterion(outputs, targets)
         self.log('train/loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
 
         if batch_idx % 10 == 0:
             # TODO: show image grid
             # pass
+            if outputs is None and z_outputs is not None:
+                # use the z_outputs to generate the images, we don't need the computation graph
+                outputs = self.model.autoencoder.decode(z_outputs)
             input_output_target = torch.cat([inputs, outputs, targets], dim=3)
             # grid = torchvision.utils.make_grid(input_output_target, nrow=12)
             # self.log("train/input_output_target", grid)
@@ -95,6 +119,24 @@ def load_autoencoder(controlnet_weights):
         param.requires_grad = False
     return autoencoder
 
+def load_unet_weights(unet, controlnet_weights):
+    state_dict = load_state_dict(controlnet_weights, location='cpu')
+
+    state_dict_renamed_keys = {}
+    for k, v in state_dict.items():
+        if k not in unet.state_dict():
+            continue
+        if k.startswith('model.diffusion_model.'):
+            k = k.replace('model.diffusion_model.', '')
+            state_dict_renamed_keys[k] = v
+    for k, v in state_dict_renamed_keys.items():
+        if k.endswith('proj_out.weight'):
+            state_dict_renamed_keys[k] = v.squeeze(-1)
+    for k, v in unet.state_dict().items():
+        if k not in state_dict_renamed_keys:
+            state_dict_renamed_keys[k] = v
+    unet.load_state_dict(state_dict_renamed_keys, strict=False)
+
 class LatentUnet(torch.nn.Module):
     def __init__(self, autoencoder, unet):
         super().__init__()
@@ -122,13 +164,15 @@ def train(cfg: DictConfig):
     data_module = instantiate(cfg.data)
     autoencoder = load_autoencoder(cfg.train.controlnet_weights)
     unet = instantiate(cfg.model)
+    # load_unet_weights(unet, cfg.train.controlnet_weights)
     model = LatentUnet(autoencoder, unet)
     optimizer = instantiate(cfg.optimizer, params=model.unet.parameters())
     criterion = instantiate(cfg.criterion)
     callbacks = [instantiate(c) for c in cfg.callbacks.values()]
+    stage = cfg.train.stage
 
     # Create the LightningModule
-    lightning_module = LightningModule(model, optimizer, criterion)
+    lightning_module = LightningModule(model, optimizer, criterion, stage=stage)
 
     # Create the Trainer
     trainer = pl.Trainer(

@@ -37,6 +37,7 @@ from ldm.modules.diffusionmodules.util import (
     linear,
     avg_pool_nd,
     normalization,
+    zero_module,
 )
 from ldm.modules.attention import SpatialTransformer
 from ldm.util import exists
@@ -731,6 +732,7 @@ class UNetModel(nn.Module):
                 conv_nd(dims, model_channels, n_embed, 1),
                 #nn.LogSoftmax(dim=1)  # change to cross_entropy and produce non-normalized logits
             )
+        self.zero_conv = zero_module(conv_nd(dims, in_channels, out_channels, 1))
 
     def convert_to_fp16(self):
         """
@@ -766,6 +768,7 @@ class UNetModel(nn.Module):
             h = module(h)
         h = h.type(x.dtype)
         if self.predict_codebook_ids:
-            return self.id_predictor(h)
+            h = self.id_predictor(h)
         else:
-            return self.out(h)
+            h = self.out(h)
+        return x + self.zero_conv(h)
