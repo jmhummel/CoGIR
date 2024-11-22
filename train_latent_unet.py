@@ -124,7 +124,7 @@ def train(cfg: DictConfig):
     autoencoder = load_autoencoder(cfg.train.controlnet_weights)
     unet = instantiate(cfg.model)
     model = LatentUnet(autoencoder, unet)
-    optimizer = instantiate(cfg.optimizer, params=model.unset.parameters())
+    optimizer = instantiate(cfg.optimizer, params=model.unet.parameters())
     criterion = instantiate(cfg.criterion)
     callbacks = [instantiate(c) for c in cfg.callbacks.values()]
 
