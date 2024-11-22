@@ -27,6 +27,9 @@ class ImageDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         print(f"Full dataset size: {len(self.full_dataset)}")
+        # Assuming full dataset size is greater than val_size
+        assert self.val_size < len(self.full_dataset), "Validation size must be less than total dataset size."
+
         train_size = len(self.full_dataset) - self.val_size
         print(f"Train dataset size: {train_size}")
         print(f"Val dataset size: {self.val_size}")

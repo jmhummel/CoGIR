@@ -1,0 +1,74 @@
+defaults:
+  - config
+  - _self_
+  - model/cldm_v15
+
+data:
+  dataset:
+    _target_: data.dataset.ControlNetDatasetWithPrompts  # Takes CSV instead of directory
+    location: /home/jeremy/Documents/CoGIR/results.csv  # Path to CSV with 'path', 'desc' for image, prompt dataset
+    size: 512
+    augmentations:  # Some minor rotation, cropping so our model isn't always seeing the exact same target images
+      - _target_: albumentations.Affine
+        rotate: [-1, 1]
+        interpolation: 2
+        p: 0.5
+      - _target_: albumentations.CropAndPad
+        percent: [[-0.02, -0.0085], [-0.02, -0.0085], [-0.02, -0.0085], [-0.02, -0.0085]]
+        sample_independently: true
+        keep_size: false
+        interpolation: 2
+        p: 1
+      - _target_: data.dataset.CenterSquareCrop  # Center crop to with shorter side
+    degradations:
+      - _target_: albumentations.PlanckianJitter  # Random color temperature change
+        mode: blackbody
+        temperature_limit: [3000, 10000]
+        p: 0.7
+      - _target_: albumentations.RandomToneCurve  # Adjusts brightness, contrast in a non-linear way
+        scale: 0.1
+        per_channel: false
+        p: 0.5
+      - _target_: albumentations.RandomBrightnessContrast
+        brightness_limit: [-0.3, 0.3]
+        contrast_limit: [-0.3, 0.3]
+        brightness_by_max: false
+        p: 0.7
+      - _target_: albumentations.GaussianBlur
+        blur_limit: [3, 5]
+        p: 0.5
+      - _target_: albumentations.GaussNoise
+        var_limit: [0.001, 0.003]
+        p: 0.5
+      - _target_: albumentations.HueSaturationValue
+        hue_shift_limit: 10
+        sat_shift_limit: 20
+        val_shift_limit: 20
+        p: 0.5
+      - _target_: albumentations.CLAHE  # More advanced contrast enhancement (Contrast Limited Adaptive Histogram Equalization)
+        clip_limit: 4.0
+        tile_grid_size: [8, 8]
+        p: 0.5
+      - _target_: data.dataset.ClipMinToZero  # Prevents negative values (otherwise, will cause errors with RandomGamma)
+      - _target_: albumentations.RandomGamma
+        gamma_limit: [ 75, 125 ]
+        p: 0.5
+  batch_size: 8
+  num_workers: 8
+train:
+  gpus: [0, 1]
+  sd_locked: true
+  only_mid_control: false
+  learning_rate: 4e-5
+  epochs: 2000
+  # IMPORTANT: Initial training must be done from the `control_sd15_ini.ckpt` checkpoint, with the Stable Diffusion weights
+  #resume_path: checkpoints/control_sd15_ini.ckpt
+  resume_path: checkpoints/epoch=0-train_loss=0.00-v4.ckpt
+callbacks:
+  checkpoint:
+    monitor: "val/loss"
+  image_logger:
+    _target_: cldm.logger.ImageLogger
+    batch_frequency: 200
+logger:
+  notes: "ControlNet"
