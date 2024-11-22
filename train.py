@@ -108,6 +108,7 @@ def train(cfg: DictConfig):
         precision=cfg.train.precision,
         devices=cfg.train.gpus if torch.cuda.is_available() else 0,
         strategy="ddp",
+        accelerator="gpu",
     )
 
     # Train the model
