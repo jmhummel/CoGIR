@@ -1,3 +1,28 @@
+# This file is based on the original work from the ControlNet repository.
+#
+# Original file:
+#   - File name and path: ldm/modules/diffusionmodules/openaimodel.py
+#   - Original URL: https://github.com/lllyasviel/ControlNet/blob/main/ldm/modules/diffusionmodules/openaimodel.py
+#   - Original commit hash: e38d22aa1ce2c2c72d2536c8f337b47249033c98 (Feb 10, 2023)
+#
+# Original repository:
+#   - Repository name: ControlNet
+#   - Repository URL: https://github.com/lllyasviel/ControlNet
+#
+# Author of the original file:
+#   - User ID: lllyasviel
+#   - Name: Lvmin Zhang
+#
+# License:
+#   This file is licensed under the Apache License, Version 2.0.
+#   You may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at:
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Modifications:
+#   This file has been modified from its original version. The modifications
+#   include removing embeddings from the UNet and submodules
+
 from abc import abstractmethod
 import math
 
