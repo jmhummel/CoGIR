@@ -51,7 +51,7 @@ data:
       - _target_: albumentations.RandomGamma
         gamma_limit: [ 75, 125 ]
         p: 0.5
-  batch_size: 8
+  batch_size: 4
 train:
   gpus: [0, 1]
   controlnet_weights: checkpoints/control_sd15_ini.ckpt
