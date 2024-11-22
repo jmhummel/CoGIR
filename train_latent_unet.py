@@ -104,7 +104,7 @@ class LatentUnet(torch.nn.Module):
     def forward(self, x):
         with torch.no_grad():
             posterior = self.autoencoder.encode(x)
-            z = posterior.sample().detach()
+            z = posterior.sample()
         pred_z = self.unet(z)
         with torch.no_grad():
             dec = self.autoencoder.decode(pred_z)
@@ -124,7 +124,7 @@ def train(cfg: DictConfig):
     autoencoder = load_autoencoder(cfg.train.controlnet_weights)
     unet = instantiate(cfg.model)
     model = LatentUnet(autoencoder, unet)
-    optimizer = instantiate(cfg.optimizer, params=model.parameters())
+    optimizer = instantiate(cfg.optimizer, params=model.unset.parameters())
     criterion = instantiate(cfg.criterion)
     callbacks = [instantiate(c) for c in cfg.callbacks.values()]
 
