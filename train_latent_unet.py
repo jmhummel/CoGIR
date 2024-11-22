@@ -102,8 +102,9 @@ class LatentUnet(torch.nn.Module):
         self.unet = unet
 
     def forward(self, x):
-        posterior = self.autoencoder.encode(x)
-        z = posterior.sample()
+        with torch.no_grad():
+            posterior = self.autoencoder.encode(x)
+            z = posterior.sample()
         pred_z = self.unet(z)
         dec = self.autoencoder.decode(pred_z)
         return dec
