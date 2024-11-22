@@ -103,16 +103,11 @@ class LatentUnet(torch.nn.Module):
 
     def forward(self, x):
         with torch.no_grad():
-            print(f'x.shape: {x.shape}')
             posterior = self.autoencoder.encode(x)
-            print(f'posterior.shape: {posterior.shape}')
             z = posterior.sample().detach()
-            print(f'z.shape: {z.shape}')
         pred_z = self.unet(z)
-        print(f'pred_z.shape: {pred_z.shape}')
         with torch.no_grad():
             dec = self.autoencoder.decode(pred_z)
-            print(f'dec.shape: {dec.shape}')
         return dec
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
