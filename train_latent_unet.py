@@ -83,11 +83,11 @@ class LightningModule(pl.LightningModule):
     def configure_optimizers(self):
         return self.optimizer
 
-def load_autoencoder():
+def load_autoencoder(controlnet_weights):
     cfg = OmegaConf.load('config/model/cldm_v15.yaml')
     model_config = OmegaConf.to_container(cfg.model, resolve=True)
     model = instantiate_from_config(model_config)
-    model.load_state_dict(load_state_dict('checkpoints/control_sd15_ini.ckpt', location='cpu'), strict=False)
+    model.load_state_dict(load_state_dict(controlnet_weights, location='cpu'), strict=False)
     autoencoder = model.first_stage_model
     autoencoder.eval()
     return autoencoder
@@ -118,7 +118,7 @@ def train(cfg: DictConfig):
     # Instantiate all the objects using Hydra
     logger = instantiate(cfg.logger)
     data_module = instantiate(cfg.data)
-    autoencoder = load_autoencoder()
+    autoencoder = load_autoencoder(cfg.train.controlnet_weights)
     unet = instantiate(cfg.model)
     model = LatentUnet(autoencoder, unet)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
