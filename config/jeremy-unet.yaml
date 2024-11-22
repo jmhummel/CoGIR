@@ -1,0 +1,21 @@
+defaults:
+  - config
+  - _self_
+
+data:
+  dataset:
+    location: /media/disk3/unsplash-lite_data
+    augmentations: []
+    degradations:
+      - _target_: albumentations.RandomBrightnessContrast
+        p: 1.0
+        brightness_limit: 0.5
+        contrast_limit: 0.5
+  batch_size: 4
+train:
+  gpus: [0, 1]
+logger:
+  notes: "Hydra/Lightning refactor"
+criterion:
+  _target_: criterion.lpips_loss.LPIPSLoss
+  use_l1: true

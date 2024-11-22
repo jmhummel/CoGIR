@@ -22,3 +22,4 @@ yapf
 prettytable
 safetensors
 basicsr
+numpy~=1.23

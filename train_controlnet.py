@@ -75,9 +75,6 @@ def train(cfg: DictConfig):
         devices=cfg.train.gpus if torch.cuda.is_available() else 0,
         strategy="ddp",
         accelerator="gpu",
-        val_check_interval=1000,
-        # check_val_every_n_epoch=None,
-        log_every_n_steps=10,
     )
 
     # Train the model
