@@ -90,6 +90,9 @@ def load_autoencoder(controlnet_weights):
     model.load_state_dict(load_state_dict(controlnet_weights, location='cpu'), strict=False)
     autoencoder = model.first_stage_model
     autoencoder.eval()
+    # freeze the weights
+    for param in autoencoder.parameters():
+        param.requires_grad = False
     return autoencoder
 
 class LatentUnet(torch.nn.Module):
@@ -100,11 +103,16 @@ class LatentUnet(torch.nn.Module):
 
     def forward(self, x):
         with torch.no_grad():
+            print(f'x.shape: {x.shape}')
             posterior = self.autoencoder.encode(x)
-            z = posterior.sample()
-        z = self.unet(z)
+            print(f'posterior.shape: {posterior.shape}')
+            z = posterior.sample().detach()
+            print(f'z.shape: {z.shape}')
+        pred_z = self.unet(z)
+        print(f'pred_z.shape: {pred_z.shape}')
         with torch.no_grad():
-            dec = self.autoencoder.decode(z)
+            dec = self.autoencoder.decode(pred_z)
+            print(f'dec.shape: {dec.shape}')
         return dec
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
