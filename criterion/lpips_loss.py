@@ -1,3 +1,4 @@
+import torch
 from lpips import LPIPS
 from torch import nn
 import torch.nn.functional as F
@@ -10,7 +11,8 @@ class LPIPSLoss(nn.Module):
         self.use_l1 = use_l1
 
     def forward(self, x, y):
-        loss = self.lpips(x, y, normalize=True).mean()
-        if self.use_l1:
-            loss += F.l1_loss(x, y)
-        return loss
+        with torch.no_grad():
+            loss = self.lpips(x, y, normalize=True).mean()
+            if self.use_l1:
+                loss += F.l1_loss(x, y)
+            return loss
