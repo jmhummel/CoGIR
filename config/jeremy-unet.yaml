@@ -58,3 +58,6 @@ logger:
 criterion:
   _target_: criterion.lpips_loss.LPIPSLoss
   use_l1: true
+callbacks:
+  model_checkpoint:
+    monitor: train/loss
