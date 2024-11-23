@@ -212,7 +212,7 @@ class ResBlock(nn.Module):
             normalization(self.out_channels),
             nn.SiLU(),
             nn.Dropout(p=dropout),
-            conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)
+            zero_module(conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)),
         )
 
         if self.out_channels == channels:
@@ -283,7 +283,7 @@ class AttentionBlock(nn.Module):
             # split heads before split qkv
             self.attention = QKVAttentionLegacy(self.num_heads)
 
-        self.proj_out = conv_nd(1, channels, channels, 1)
+        self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
 
     def forward(self, x):
         return checkpoint(self._forward, (x,), self.parameters(), True)   # TODO: check checkpoint usage, is True # TODO: fix the .half call!!!
@@ -724,7 +724,7 @@ class UNetModel(nn.Module):
         self.out = nn.Sequential(
             normalization(ch),
             nn.SiLU(),
-            conv_nd(dims, model_channels, out_channels, 3, padding=1),
+            zero_module(conv_nd(dims, model_channels, out_channels, 3, padding=1)),
         )
         if self.predict_codebook_ids:
             self.id_predictor = nn.Sequential(
@@ -732,7 +732,6 @@ class UNetModel(nn.Module):
                 conv_nd(dims, model_channels, n_embed, 1),
                 #nn.LogSoftmax(dim=1)  # change to cross_entropy and produce non-normalized logits
             )
-        self.zero_conv = zero_module(conv_nd(dims, in_channels, out_channels, 1))
 
     def convert_to_fp16(self):
         """
@@ -771,4 +770,4 @@ class UNetModel(nn.Module):
             h = self.id_predictor(h)
         else:
             h = self.out(h)
-        return x + self.zero_conv(h)
+        return x + h
