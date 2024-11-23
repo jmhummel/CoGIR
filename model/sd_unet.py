@@ -770,4 +770,4 @@ class UNetModel(nn.Module):
             h = self.id_predictor(h)
         else:
             h = self.out(h)
-        return x + h
+        return h
