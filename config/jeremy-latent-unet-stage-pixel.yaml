@@ -52,6 +52,7 @@ data:
         gamma_limit: [ 75, 125 ]
         p: 0.5
   batch_size: 8
+  num_workers: 4
 train:
   gpus: [6, 7]
   controlnet_weights: /home/shared/models/control_sd15_ini.ckpt
