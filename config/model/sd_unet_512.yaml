@@ -4,7 +4,7 @@ in_channels: 3
 model_channels: 64
 out_channels: 3
 num_res_blocks: 2
-attention_resolutions: [4, 2, 1]
+attention_resolutions: []
 dropout: 0
 channel_mult: [1, 2, 4, 4]
 conv_resample: true
@@ -25,4 +25,5 @@ disable_self_attentions: null
 num_attention_blocks: null
 disable_middle_self_attn: false
 use_linear_in_transformer: false
+#use_middle_attention: false
 
