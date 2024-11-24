@@ -10,7 +10,7 @@ channel_mult: [1, 2, 4, 8]
 conv_resample: true
 use_checkpoint: true
 use_fp16: false
-num_heads: 8
+num_heads: 1
 num_head_channels: -1
 num_heads_upsample: -1
 use_scale_shift_norm: false
