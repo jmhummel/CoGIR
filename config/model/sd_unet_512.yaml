@@ -1,0 +1,28 @@
+_target_: model.sd_unet.UNetModel
+image_size: 512
+in_channels: 3
+model_channels: 64
+out_channels: 3
+num_res_blocks: 2
+attention_resolutions: [4, 2, 1]
+dropout: 0
+channel_mult: [1, 2, 4, 4]
+conv_resample: true
+use_checkpoint: true
+use_fp16: false
+num_heads: 8
+num_head_channels: -1
+num_heads_upsample: -1
+use_scale_shift_norm: false
+resblock_updown: false
+use_new_attention_order: false
+use_spatial_transformer: false
+transformer_depth: 1
+context_dim: null
+n_embed: null
+legacy: false
+disable_self_attentions: null
+num_attention_blocks: null
+disable_middle_self_attn: false
+use_linear_in_transformer: false
+

@@ -1,7 +1,7 @@
 defaults:
   - config
   - _self_
-  - model/sd_unet
+  - model/sd_unet_512
 
 data:
   dataset:
@@ -63,11 +63,3 @@ criterion:
 callbacks:
   checkpoint:
     monitor: train/loss
-model:
-  image_size: 512
-  in_channels: 3
-  out_channels: 3
-  model_channels: 64
-  num_res_blocks: 2
-  attention_resolutions: [ 4, 2, 1 ]
-  channel_mult: [1, 2, 4, 4]
