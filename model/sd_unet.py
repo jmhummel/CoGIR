@@ -444,6 +444,7 @@ class UNetModel(nn.Module):
             num_attention_blocks=None,
             disable_middle_self_attn=False,
             use_linear_in_transformer=False,
+            use_middle_attention=True,
     ):
         super().__init__()
         print("=" * 80)
@@ -638,7 +639,7 @@ class UNetModel(nn.Module):
                 use_checkpoint=use_checkpoint,
                 use_scale_shift_norm=use_scale_shift_norm,
             ),
-            AttentionBlock(
+            (AttentionBlock(
                 ch,
                 use_checkpoint=use_checkpoint,
                 num_heads=num_heads,
@@ -648,7 +649,7 @@ class UNetModel(nn.Module):
                 ch, num_heads, dim_head, depth=transformer_depth, context_dim=context_dim,
                 disable_self_attn=disable_middle_self_attn, use_linear=use_linear_in_transformer,
                 use_checkpoint=use_checkpoint
-            ),
+            )) if use_middle_attention else nn.Identity(),
             ResBlock(
                 ch,
                 dropout,
