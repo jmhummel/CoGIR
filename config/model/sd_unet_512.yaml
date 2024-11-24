@@ -9,7 +9,7 @@ dropout: 0
 channel_mult: [1, 2, 4, 4]
 conv_resample: true
 use_checkpoint: false
-use_fp16: false
+use_fp16: true
 num_heads: 8
 num_head_channels: -1
 num_heads_upsample: -1
