@@ -4,9 +4,9 @@ in_channels: 4
 model_channels: 320
 out_channels: 4
 num_res_blocks: 2
-attention_resolutions: [8]
+attention_resolutions: []
 dropout: 0
-channel_mult: [1, 2, 4, 4]
+channel_mult: [1, 2, 4, 8]
 conv_resample: true
 use_checkpoint: true
 use_fp16: false
