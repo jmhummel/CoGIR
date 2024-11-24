@@ -8,7 +8,7 @@ attention_resolutions: []
 dropout: 0
 channel_mult: [1, 2, 4, 4]
 conv_resample: true
-use_checkpoint: true
+use_checkpoint: false
 use_fp16: false
 num_heads: 8
 num_head_channels: -1
