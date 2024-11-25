@@ -1,0 +1,5 @@
+_target_: model.unet_v2.UNetV2
+in_channels: 3
+out_channels: 3
+model_channels: 128
+use_attention: true

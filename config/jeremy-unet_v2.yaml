@@ -1,0 +1,65 @@
+defaults:
+  - config
+  - _self_
+  - model/unet_v2
+
+data:
+  dataset:
+    location: /home/shared/data/unsplash-lite_data
+    augmentations:
+      - _target_: albumentations.Affine
+        rotate: [-1, 1]
+        interpolation: 2
+        p: 0.5
+      - _target_: albumentations.CropAndPad
+        percent: [[-0.02, -0.0085], [-0.02, -0.0085], [-0.02, -0.0085], [-0.02, -0.0085]]
+        sample_independently: true
+        keep_size: false
+        interpolation: 2
+        p: 1
+      - _target_: data.augs.CenterSquareCrop  # Center crop to with shorter side
+    degradations:
+      - _target_: albumentations.PlanckianJitter  # Random color temperature change
+        mode: blackbody
+        temperature_limit: [3000, 10000]
+        p: 0.7
+      - _target_: albumentations.RandomToneCurve  # Adjusts brightness, contrast in a non-linear way
+        scale: 0.1
+        per_channel: false
+        p: 0.5
+      - _target_: albumentations.RandomBrightnessContrast
+        brightness_limit: [-0.3, 0.3]
+        contrast_limit: [-0.3, 0.3]
+        brightness_by_max: false
+        p: 0.7
+      - _target_: albumentations.GaussianBlur
+        blur_limit: [3, 5]
+        p: 0.5
+      - _target_: albumentations.GaussNoise
+        var_limit: [0.001, 0.003]
+        p: 0.5
+      - _target_: albumentations.HueSaturationValue
+        hue_shift_limit: 10
+        sat_shift_limit: 20
+        val_shift_limit: 20
+        p: 0.5
+      - _target_: albumentations.CLAHE  # More advanced contrast enhancement (Contrast Limited Adaptive Histogram Equalization)
+        clip_limit: 4.0
+        tile_grid_size: [8, 8]
+        p: 0.5
+      - _target_: data.augs.ClipMinToZero  # Prevents negative values (otherwise, will cause errors with RandomGamma)
+      - _target_: albumentations.RandomGamma
+        gamma_limit: [ 75, 125 ]
+        p: 0.5
+  batch_size: 16
+  num_workers: 4
+train:
+  gpus: [4, 5]
+logger:
+  notes: "UNetV2"
+criterion:
+  _target_: criterion.lpips_loss.LPIPSLoss
+  use_l1: true
+callbacks:
+  checkpoint:
+    monitor: train/loss
