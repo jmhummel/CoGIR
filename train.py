@@ -57,6 +57,7 @@ class LightningModule(pl.LightningModule):
             # TODO: show image grid
             # pass
             input_output_target = torch.cat([inputs, outputs, targets], dim=3)
+            input_output_target = input_output_target.clamp(0, 1)
             # grid = torchvision.utils.make_grid(input_output_target, nrow=12)
             # self.log("train/input_output_target", grid)
             # self.logger.log({"train/input_output_target": [wandb.Image(x) for x in input_output_target]})
@@ -71,6 +72,7 @@ class LightningModule(pl.LightningModule):
 
         # TODO: show image grid
         input_output_target = torch.cat([inputs, outputs, targets], dim=3)
+        input_output_target = input_output_target.clamp(0, 1)
         # grid = torchvision.utils.make_grid(input_output_target, nrow=4)
         # self.log("val/input_output_target", grid)
         # self.logger.log({"val/input_output_target": [wandb.Image(x) for x in input_output_target]})
