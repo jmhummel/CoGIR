@@ -14,23 +14,17 @@ class PooledAttentionBlock(torch.nn.Module):
 
     def forward(self, x):
         _input = x
-        # Downsample using average pooling
-        x = F.avg_pool2d(x, self.scale)
+        x = F.avg_pool2d(x, self.scale)  # Downsample using average pooling
         b, c, h, w = x.shape
-        # print(f'b: {b}, c: {c}, h: {h}, w: {w}')
         x = x.view(b, c, -1)
         x = self.norm(x)
-        # print(f'x.shape: {x.shape}')
         qkv = self.qkv(x).permute(0, 2, 1)
         q, k, v = torch.chunk(qkv, 3, dim=2)
-        # print(f'q.shape: {q.shape}, k.shape: {k.shape}, v.shape: {v.shape}')
         x, _ = self.attn(q, k, v, need_weights=False)
         x = x.permute(0, 2, 1)
         x = self.out(x)
-        # print(f'x.shape: {x.shape}')
         x = x.view(b, c, h, w)
-        # Upsample using nearest neighbor
-        x = F.interpolate(x, scale_factor=self.scale, mode='nearest')
+        x = F.interpolate(x, scale_factor=self.scale, mode='nearest')  # Upsample using nearest neighbor
         return x + _input
 
 class ResnetBlock(nn.Module):
@@ -45,7 +39,7 @@ class ResnetBlock(nn.Module):
         else:
             self.shortcut = torch.nn.Identity()
 
-    def forward(self, x, emb):
+    def forward(self, x):
         _input = x
         x = self.norm1(x)
         x = torch.nn.functional.silu(x)
